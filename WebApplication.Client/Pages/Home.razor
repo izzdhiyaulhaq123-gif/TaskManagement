@@ -1,0 +1,131 @@
+﻿@page "/"
+@inject IJSRuntime JS
+@using System.Text.Json
+
+<h2 class="text-center mb-3">Hey there 👋</h2>
+<p class="text-center mb-4">Ready to make today productive?</p>
+
+<div class="quote-box text-center mb-5">
+    <blockquote>
+        “Discipline is choosing between what you want now and what you want most.”
+    </blockquote>
+    <footer>— Abraham Lincoln</footer>
+</div>
+
+@if (taskList == null)
+{
+    <p class="text-center text-muted">Loading your tasks...</p>
+}
+else if (!taskList.Any())
+{
+    <div class="text-center">
+        <p>You don't have any tasks yet. Let's start strong 💪</p>
+        <a href="/tasks" class="btn btn-primary btn-lg mt-2">Create Your First Task 🚀</a>
+    </div>
+}
+else
+{
+    <h4 class="text-center mb-4">Your Task Summary</h4>
+    <div class="row text-center justify-content-center">
+        <div class="col-md-3 mb-3">
+            <div class="card shadow-sm p-3">
+                <h5>🕓 Not Yet</h5>
+                <p class="count">@taskList.Count(t => t.Status == "Not Started")</p>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card shadow-sm p-3">
+                <h5>🔄 In Progress</h5>
+                <p class="count">@taskList.Count(t => t.Status == "In Progress")</p>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card shadow-sm p-3">
+                <h5>✅ Done</h5>
+                <p class="count">@taskList.Count(t => t.Status == "Done")</p>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card shadow-sm p-3">
+                <h5>📋 Total</h5>
+                <p class="count">@taskList.Count</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center mt-4">
+        <a href="/tasks" class="btn btn-success btn-lg">Go to Task List ✨</a>
+    </div>
+}
+
+@code {
+    private List<TaskItem>? taskList;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var json = await JS.InvokeAsync<string>("localStorage.getItem", "tasks");
+        taskList = string.IsNullOrEmpty(json)
+        ? new List<TaskItem>()
+        : JsonSerializer.Deserialize<List<TaskItem>>(json);
+    }
+
+    public class TaskItem
+    {
+        public string? Name { get; set; }
+        public string Status { get; set; } = "Not Started";
+    }
+}
+
+<style>
+    h2,
+    h4,
+    h5,
+    p,
+    footer {
+        color: var(--text-color);
+    }
+
+    .quote-box {
+        font-style: italic;
+        color: var(--text-color);
+        border-left: 4px solid #007bff;
+        padding-left: 15px;
+        margin: 0 auto;
+        max-width: 600px;
+    }
+
+    .card {
+        background-color: var(--card-bg);
+        border-radius: 10px;
+        transition: transform 0.2s ease-in-out;
+    }
+
+    .card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    }
+
+    .count {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #007bff;
+    }
+
+    [data-theme="dark"] {
+        --bg-color: #121212;
+        --text-color: #ffffff;
+        --card-bg: #1f1f1f;
+    }
+
+    body,
+    .page {
+        background-color: var(--bg-color);
+        color: var(--text-color);
+    }
+
+    a.btn {
+        font-weight: 500;
+        padding: 10px 24px;
+        border-radius: 8px;
+    }
+</style>

@@ -1,0 +1,152 @@
+:root {
+    --bg-color: #ffffff;
+    --text-color: #212529;
+    --nav-bg: #212529;
+    --table-bg: #ffffff;
+    --table-hover: #f1f5f9;
+}
+
+.dark-mode {
+    --bg-color: #181a1b;
+    --text-color: #f1f1f1;
+    --nav-bg: #121416;
+    --table-bg: #1f2122;
+    --table-hover: #2c2f31;
+}
+
+/* Apply global theme */
+body,
+html {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+}
+
+.navbar,
+.bg-dark {
+    background-color: var(--nav-bg) !important;
+}
+
+table.table {
+    background-color: var(--table-bg);
+}
+
+.table tbody tr:hover {
+    background-color: var(--table-hover);
+}
+
+/* Input box full width */
+input.form-control {
+    width: 100%;
+}
+
+/* Button spacing */
+button.btn-primary {
+    margin-top: 0.5rem;
+}
+
+/* Table layout */
+table.table {
+    margin-top: 1rem;
+    width: 100%;
+    border-collapse: collapse;
+}
+
+/* Align text vertically center for all table cells */
+table.table th,
+table.table td {
+    vertical-align: middle !important;
+    text-align: left;
+    padding: 10px 12px;
+}
+
+/* Make select and buttons look consistent in height */
+select.form-select {
+    width: 150px;
+    height: 38px;
+    padding: 5px 10px;
+}
+
+/* Input inside editable cell (inline edit) */
+td input.form-control-sm {
+    height: 32px;
+    font-size: 0.95rem;
+    padding: 4px 6px;
+}
+
+/* Date picker input */
+input[type="date"] {
+    width: 150px;
+    height: 38px;
+    padding: 4px 8px;
+    font-size: 0.9rem;
+}
+
+/* Task status badges */
+.badge {
+    font-size: 0.9rem;
+    padding: 6px 10px;
+}
+
+/* Optional: make the table more readable */
+.table-striped tbody tr:nth-of-type(odd) {
+    background-color: #f8f9fa;
+}
+
+/* Highlight overdue (danger rows) */
+.table-danger {
+    background-color: #f8d7da !important;
+}
+
+/* Hover effect for table rows */
+.table tbody tr:hover {
+    background-color: #eef2f7;
+    transition: background-color 0.2s ease;
+}
+
+/* Counter section styling */
+.stats-summary {
+    margin-top: 1rem;
+    padding: 0.75rem;
+    border-radius: 8px;
+    background-color: #f1f3f5;
+    font-size: 0.95rem;
+}
+
+.stats-summary span {
+    margin-right: 10px;
+}
+
+/* Horizontally align input section neatly */
+.d-flex.gap-2 input,
+.d-flex.gap-2 select,
+.d-flex.gap-2 button {
+    min-height: 38px;
+}
+
+/* Add hover effect to rows */
+.table-striped tbody tr:hover {
+    background-color: #f1f5f9;
+}
+
+.card {
+    border-radius: 12px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.progress {
+    background-color: #e9ecef;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    color: #fff;
+    font-weight: 600;
+    text-align: center;
+    transition: width 0.4s ease;
+}

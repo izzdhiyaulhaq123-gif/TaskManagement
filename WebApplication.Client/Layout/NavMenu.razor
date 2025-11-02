@@ -1,0 +1,56 @@
+﻿@inject IJSRuntime JS
+
+<div class="top-row ps-3 navbar navbar-dark bg-dark">
+    <div class="container-fluid d-flex align-items-center justify-content-between">
+        <a class="navbar-brand d-flex align-items-center" href="">
+            <img src="favicon1.png" alt="ToDoApp Logo" width="28" height="28" class="me-2 rounded" />
+            <span>ToDoApp</span>
+        </a>
+
+        <div class="d-flex align-items-center">
+            <!-- 🌙 Dark Mode Toggle -->
+            <div class="form-check form-switch text-light me-3">
+                <input class="form-check-input" type="checkbox" id="darkModeToggle" @onchange="ToggleDarkMode"
+                    checked="@isDarkMode" />
+                <label class="form-check-label" for="darkModeToggle">
+                    @(isDarkMode ? "🌙 Dark" : "☀️ Light")
+                </label>
+            </div>
+
+            <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="@NavMenuCssClass nav-scrollable bg-dark">
+    <nav class="nav flex-column">
+        <div class="nav-item px-3">
+            <NavLink class="nav-link text-light" href="" Match="NavLinkMatch.All">
+                <span class="bi bi-house-door-fill me-2" aria-hidden="true"></span> Home
+            </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link text-light" href="/tasks">
+                <span class="bi bi-check-square-fill me-2" aria-hidden="true"></span> Tasks
+            </NavLink>
+        </div>
+        <!-- Weather tab removed -->
+    </nav>
+</div>
+
+@code {
+    private bool collapseNavMenu = true;
+    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+    private bool isDarkMode = false;
+
+    private void ToggleNavMenu() => collapseNavMenu = !collapseNavMenu;
+
+    // ✅ Make this async
+    private async Task ToggleDarkMode(ChangeEventArgs e)
+    {
+        isDarkMode = (bool)e.Value!;
+        await JS.InvokeVoidAsync("toggleDarkMode", isDarkMode);
+    }
+}

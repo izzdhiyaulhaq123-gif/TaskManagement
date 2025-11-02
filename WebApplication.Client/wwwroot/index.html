@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Task Management App</title>
+    <base href="/" />
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="css/app.css" />
+    <link href="WebApplication.Client.styles.css" rel="stylesheet" />
+    <link rel="icon" type="image/png" href="favicon1.png" />
+    <style>
+        /* Center box styling */
+        #login-box {
+            max-width: 400px;
+            margin: 80px auto 0 auto;
+            padding: 30px 25px;
+            border-radius: 12px;
+            background: #ffffff;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        #login-box h4 {
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        #login-box p {
+            font-size: 0.95rem;
+            color: #555555;
+            margin-bottom: 20px;
+        }
+
+        /* Dark mode box */
+        .dark-mode #login-box {
+            background: #1f1f1f;
+            color: #f1f1f1;
+        }
+
+        .dark-mode #login-box p {
+            color: #cccccc;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Login / Register Container -->
+    <div id="login-container">
+        <div id="login-box" class="text-center">
+            <h4>Welcome to Your Task Manager!</h4>
+            <p>Let's start organizing your tasks efficiently. 🚀</p>
+            <button id="login-btn" class="btn btn-primary m-2">Login</button>
+            <button id="register-btn" class="btn btn-outline-success m-2">Register</button>
+        </div>
+    </div>
+
+    <!-- App Container (Hidden until login) -->
+    <div id="app" style="display:none;">
+        <svg class="loading-progress">
+            <circle r="40%" cx="50%" cy="50%" />
+            <circle r="40%" cx="50%" cy="50%" />
+        </svg>
+        <div class="loading-progress-text"></div>
+    </div>
+
+    <!-- Keycloak -->
+    <script src="keycloak.min.js"></script>
+
+    <!-- Blazor startup -->
+    <script src="_framework/blazor.webassembly.js" autostart="false"></script>
+
+    <script>
+        // Initialize Keycloak
+        window.keycloak = new Keycloak({
+            url: 'http://localhost:8080',
+            realm: 'TaskRealm',
+            clientId: 'blazor-client'
+        });
+
+        const loginContainer = document.getElementById('login-container');
+        const loginBtn = document.getElementById('login-btn');
+        const registerBtn = document.getElementById('register-btn');
+        const appDiv = document.getElementById('app');
+
+        async function initializeKeycloak()
+        {
+            try
+            {
+                const authenticated = await window.keycloak.init({ onLoad: 'check-sso' });
+
+                if (authenticated)
+                {
+                    console.log('✅ Authenticated with Keycloak');
+                    sessionStorage.setItem('token', window.keycloak.token);
+                    loginContainer.style.display = 'none';
+                    appDiv.style.display = 'block';
+                    Blazor.start(); // Start Blazor only after authentication
+                } else
+                {
+                    console.log('❌ Not authenticated');
+                    loginContainer.style.display = 'block';
+                    appDiv.style.display = 'none';
+                }
+            } catch (err)
+            {
+                console.error('❌ Keycloak initialization failed', err);
+            }
+        }
+
+        // Login button
+        loginBtn.addEventListener('click', () => window.keycloak.login());
+
+        // Register button
+        registerBtn.addEventListener('click', () => window.keycloak.register());
+
+        // Run initialization
+        initializeKeycloak();
+    </script>
+
+    <!-- Dark Mode Toggle -->
+    <script>
+        window.toggleDarkMode = (isDark) =>
+        {
+            if (isDark)
+            {
+                document.documentElement.classList.add('dark-mode');
+                localStorage.setItem('theme', 'dark');
+            } else
+            {
+                document.documentElement.classList.remove('dark-mode');
+                localStorage.setItem('theme', 'light');
+            }
+        };
+
+        // Auto-load saved mode
+        document.addEventListener('DOMContentLoaded', () =>
+        {
+            if (localStorage.getItem('theme') === 'dark')
+            {
+                document.documentElement.classList.add('dark-mode');
+            }
+
+            const toggle = document.getElementById('darkModeToggle');
+            if (toggle)
+            {
+                toggle.addEventListener('click', () =>
+                {
+                    const isDark = document.body.classList.toggle('dark-mode');
+                    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+                });
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,257 @@
+@page "/tasks"
+@using System.Text.Json
+@inject IJSRuntime JS
+
+<h3 class="mb-3">📝 Task Manager</h3>
+
+<!-- 🧾 Summary Cards -->
+<div class="row text-center mb-3 summary-boxes">
+    <div class="col-md-3 mb-2">
+        <div class="card p-3 shadow-sm">
+            <h5>🕓 Not Yet</h5>
+            <p>@taskList.Count(t => t.Status == "Not Started")</p>
+        </div>
+    </div>
+    <div class="col-md-3 mb-2">
+        <div class="card p-3 shadow-sm">
+            <h5>🔄 In Progress</h5>
+            <p>@taskList.Count(t => t.Status == "In Progress")</p>
+        </div>
+    </div>
+    <div class="col-md-3 mb-2">
+        <div class="card p-3 shadow-sm">
+            <h5>✅ Done</h5>
+            <p>@taskList.Count(t => t.Status == "Done")</p>
+        </div>
+    </div>
+    <div class="col-md-3 mb-2">
+        <div class="card p-3 shadow-sm">
+            <h5>📋 Total</h5>
+            <p>@taskList.Count</p>
+        </div>
+    </div>
+</div>
+
+<!-- 🧠 Motivational Message -->
+<div class="text-center mb-3 motivational-message">
+    <h5>@GetMotivationalMessage()</h5>
+</div>
+
+<!-- ➕ Add Task Section -->
+<div class="mb-3 d-flex flex-wrap gap-2 align-items-center">
+    <input class="form-control flex-fill" @bind="newTaskName" placeholder="Enter a new task..." />
+    <select class="form-select" style="max-width:150px;" @bind="newCategory">
+        <option value="">Select Category</option>
+        <option>Work</option>
+        <option>Personal</option>
+        <option>Study</option>
+    </select>
+    <input type="date" class="form-control" style="max-width:180px;" @bind="newDueDate" />
+    <button class="btn btn-primary" @onclick="AddTask">Add Task</button>
+</div>
+
+@if (taskList.Count == 0)
+{
+    <p>No tasks yet. Add one above!</p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Task</th>
+                <th>Category</th>
+                <th>Status</th>
+                <th>Due Date</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var task in taskList)
+            {
+                <tr class="@GetOverdueClass(task)">
+                    <td>
+                        @if (task.IsEditing)
+                        {
+                            <input class="form-control" @bind="task.Name" @onkeydown="(e) => OnEditKeyDown(e, task)" />
+                        }
+                        else
+                        {
+                            <span @ondblclick="() => EditTask(task)">
+                                @task.Name
+                            </span>
+                        }
+                    </td>
+                    <td>
+                        <span class="@GetCategoryBadge(task.Category)">
+                            @task.Category
+                        </span>
+                    </td>
+                    <td>
+                        <select class="form-select" value="@task.Status" @onchange="e => UpdateStatus(task, e)">
+                            <option>Not Started</option>
+                            <option>In Progress</option>
+                            <option>Done</option>
+                        </select>
+                    </td>
+                    <td>
+                        <input type="date" class="form-control" value="@task.DueDate?.ToString("yyyy-MM-dd")"
+                            @onchange="e => UpdateDueDate(task, e)" />
+                    </td>
+                    <td>
+                        <button class="btn btn-danger btn-sm" @onclick="() => DeleteTask(task)">🗑️</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<TaskItem> taskList = new();
+    private string? newTaskName;
+    private string? newCategory;
+    private DateTime? newDueDate;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTasks();
+    }
+
+    private async Task AddTask()
+    {
+        if (string.IsNullOrWhiteSpace(newTaskName)) return;
+
+        var newTask = new TaskItem
+        {
+            Name = newTaskName,
+            Category = newCategory ?? "Uncategorized",
+            Status = "Not Started",
+            DueDate = newDueDate
+        };
+
+        taskList.Add(newTask);
+        await SaveTasks();
+        newTaskName = "";
+        newCategory = "";
+        newDueDate = null;
+    }
+
+    private void EditTask(TaskItem task) => task.IsEditing = true;
+
+    private async Task OnEditKeyDown(KeyboardEventArgs e, TaskItem task)
+    {
+        if (e.Key == "Enter")
+        {
+            task.IsEditing = false;
+            await SaveTasks();
+        }
+    }
+
+    private async Task UpdateStatus(TaskItem task, ChangeEventArgs e)
+    {
+        task.Status = e.Value?.ToString() ?? "Not Started";
+        await SaveTasks();
+    }
+
+    private async Task UpdateDueDate(TaskItem task, ChangeEventArgs e)
+    {
+        if (DateTime.TryParse(e.Value?.ToString(), out var parsedDate))
+            task.DueDate = parsedDate;
+
+        await SaveTasks();
+    }
+
+    private async Task DeleteTask(TaskItem task)
+    {
+        taskList.Remove(task);
+        await SaveTasks();
+    }
+
+    private async Task SaveTasks()
+    {
+        var json = JsonSerializer.Serialize(taskList);
+        await JS.InvokeVoidAsync("localStorage.setItem", "tasks", json);
+    }
+
+    private async Task LoadTasks()
+    {
+        var json = await JS.InvokeAsync<string>("localStorage.getItem", "tasks");
+        if (!string.IsNullOrEmpty(json))
+        {
+            taskList = JsonSerializer.Deserialize<List<TaskItem>>(json) ?? new();
+        }
+    }
+
+    private string GetOverdueClass(TaskItem task)
+    {
+        if (task.DueDate.HasValue && task.DueDate.Value.Date < DateTime.Now.Date && task.Status != "Done")
+        {
+            return "table-danger";
+        }
+        return "";
+    }
+
+    private string GetCategoryBadge(string category) => category switch
+    {
+        "Work" => "badge bg-primary",
+        "Personal" => "badge bg-info text-dark",
+        "Study" => "badge bg-success",
+        _ => "badge bg-secondary"
+    };
+
+    private string GetMotivationalMessage()
+    {
+        if (taskList.Count == 0) return "Let's start your first task 🚀";
+        if (taskList.All(t => t.Status == "Done")) return "All tasks done 🎉";
+        return "Keep going! You got this 💪";
+    }
+
+    public class TaskItem
+    {
+        public string? Name { get; set; }
+        public string Category { get; set; } = "Uncategorized";
+        public string Status { get; set; } = "Not Started";
+        public DateTime? DueDate { get; set; }
+        public bool IsEditing { get; set; } = false;
+    }
+}
+
+<style>
+    :root {
+        --bg-color: #ffffff;
+        --text-color: #000000;
+        --card-bg: #f8f9fa;
+    }
+
+    [data-theme="dark"] {
+        --bg-color: #121212;
+        --text-color: #ffffff;
+        --card-bg: #1f1f1f;
+    }
+
+    body,
+    .page {
+        background-color: var(--bg-color);
+        color: var(--text-color);
+    }
+
+    .card {
+        background-color: var(--card-bg);
+        color: var(--text-color);
+        border-radius: 10px;
+        transition: background-color 0.3s, color 0.3s;
+    }
+
+    .motivational-message h5 {
+        color: var(--text-color);
+        font-weight: 600;
+        transition: color 0.3s;
+    }
+
+    h5,
+    p {
+        color: var(--text-color);
+        transition: color 0.3s;
+    }
+</style>
