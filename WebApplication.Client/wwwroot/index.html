@@ -54,6 +54,8 @@
             <p>Let's start organizing your tasks efficiently. 🚀</p>
             <button id="login-btn" class="btn btn-primary m-2">Login</button>
             <button id="register-btn" class="btn btn-outline-success m-2">Register</button>
+            <!-- Optional: Celebrate button -->
+            <button id="celebrate-btn" class="btn btn-warning m-2">Celebrate</button>
         </div>
     </div>
 
@@ -69,6 +71,10 @@
     <!-- Keycloak -->
     <script src="keycloak.min.js"></script>
 
+    <!-- Confetti JS Library -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="js/confetti.js"></script>
+
     <!-- Blazor startup -->
     <script src="_framework/blazor.webassembly.js" autostart="false"></script>
 
@@ -83,6 +89,7 @@
         const loginContainer = document.getElementById('login-container');
         const loginBtn = document.getElementById('login-btn');
         const registerBtn = document.getElementById('register-btn');
+        const celebrateBtn = document.getElementById('celebrate-btn');
         const appDiv = document.getElementById('app');
 
         async function initializeKeycloak()
@@ -98,6 +105,9 @@
                     loginContainer.style.display = 'none';
                     appDiv.style.display = 'block';
                     Blazor.start(); // Start Blazor only after authentication
+
+                    // 🎉 Trigger confetti on login
+                    showConfetti();
                 } else
                 {
                     console.log('❌ Not authenticated');
@@ -115,6 +125,9 @@
 
         // Register button
         registerBtn.addEventListener('click', () => window.keycloak.register());
+
+        // Celebrate button
+        celebrateBtn.addEventListener('click', () => showConfetti());
 
         // Run initialization
         initializeKeycloak();

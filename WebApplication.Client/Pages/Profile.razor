@@ -1,0 +1,78 @@
+@page "/profile"
+@inject IJSRuntime JS
+@using Microsoft.AspNetCore.Components.Forms
+
+<h3>User Profile</h3>
+
+<div class="card mx-auto" style="max-width:400px; margin-top:20px;">
+    <div class="card-body text-center">
+
+        <!-- Profile Picture -->
+        <img src="@ProfilePicture" class="rounded-circle mb-3" width="120" height="120" />
+
+        <InputFile OnChange="OnInputFileChange" />
+
+        <!-- Editable Username -->
+        <div class="mb-3 mt-3">
+            <label class="form-label">Username</label>
+            <input class="form-control" @bind="Username" />
+        </div>
+
+        <!-- Editable Email -->
+        <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input class="form-control" @bind="Email" type="email" />
+        </div>
+
+        <!-- Save Button -->
+        <button class="btn btn-primary w-100" @onclick="SaveProfile">Save Profile</button>
+    </div>
+</div>
+
+@code {
+    string Username = "John Doe";
+    string Email = "john.doe@example.com";
+    string ProfilePicture = "https://via.placeholder.com/120";
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Fetch user data from Keycloak token if available
+        var token = await JS.InvokeAsync<string>("sessionStorage.getItem", "token");
+        if (!string.IsNullOrEmpty(token))
+        {
+            var payload = ParseJwt(token);
+            Username = payload.GetValueOrDefault("preferred_username")?.ToString() ?? Username;
+            Email = payload.GetValueOrDefault("email")?.ToString() ?? Email;
+        }
+    }
+
+    // Handle profile picture upload
+    private async Task OnInputFileChange(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        var buffer = new byte[file.Size];
+        await file.OpenReadStream().ReadAsync(buffer);
+
+        // Convert to base64 for preview
+        ProfilePicture = $"data:{file.ContentType};base64,{Convert.ToBase64String(buffer)}";
+    }
+
+    // Save profile
+    private async Task SaveProfile()
+    {
+        // Here you can call your API to save changes
+        // For now, just show confetti
+        await JS.InvokeVoidAsync("showConfetti");
+    }
+
+    // JWT parser helper
+    private Dictionary<string, object> ParseJwt(string jwt)
+    {
+        var parts = jwt.Split('.');
+        var payload = parts[1];
+        payload = payload.PadRight(payload.Length + (4 - payload.Length % 4) % 4, '=');
+        var jsonBytes = Convert.FromBase64String(payload.Replace('-', '+').Replace('_', '/'));
+        var json = System.Text.Encoding.UTF8.GetString(jsonBytes);
+        return System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(json) ?? new();
+    }
+}

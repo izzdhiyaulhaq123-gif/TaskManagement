@@ -30,3 +30,4 @@ C:\Users\User\TaskManagementWebApp\WebApplication.Server\obj\Debug\net9.0\refint
 C:\Users\User\TaskManagementWebApp\WebApplication.Server\obj\Debug\net9.0\WebApplication.Server.pdb
 C:\Users\User\TaskManagementWebApp\WebApplication.Server\obj\Debug\net9.0\WebApplication.Server.genruntimeconfig.cache
 C:\Users\User\TaskManagementWebApp\WebApplication.Server\obj\Debug\net9.0\ref\WebApplication.Server.dll
+C:\Users\User\TaskManagementWebApp\WebApplication.Server\obj\Debug\net9.0\WebApplication.Server.sourcelink.json

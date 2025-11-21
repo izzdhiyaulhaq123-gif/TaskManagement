@@ -1,58 +1,142 @@
 ﻿@page "/"
 @inject IJSRuntime JS
+@inject NavigationManager Nav
 @using System.Text.Json
 
-<h2 class="text-center mb-3">Hey there 👋</h2>
-<p class="text-center mb-4">Ready to make today productive?</p>
+<h2 class="text-center mb-3">@Greeting 👋</h2>
+<p class="text-center mb-4 text-muted">Ready to make today productive?</p>
 
 <div class="quote-box text-center mb-5">
-    <blockquote>
+    <blockquote class="fst-italic">
         “Discipline is choosing between what you want now and what you want most.”
     </blockquote>
-    <footer>— Abraham Lincoln</footer>
+    <footer class="blockquote-footer">Abraham Lincoln</footer>
 </div>
 
-@if (taskList == null)
-{
-    <p class="text-center text-muted">Loading your tasks...</p>
-}
-else if (!taskList.Any())
+@if (taskList == null || !taskList.Any())
 {
     <div class="text-center">
-        <p>You don't have any tasks yet. Let's start strong 💪</p>
+        <p class="text-muted">You don't have any tasks yet. Let's start strong 💪</p>
         <a href="/tasks" class="btn btn-primary btn-lg mt-2">Create Your First Task 🚀</a>
     </div>
 }
 else
 {
+    <!-- Today's Tasks Summary -->
+    @if (todayTasks.Any())
+    {
+        <h4 class="text-center mb-3">📅 Today's Summary</h4>
+        <div class="row text-center justify-content-center mb-4">
+            <div class="col-md-3 mb-3">
+                <div class="card shadow-sm p-3">
+                    <h5>🕓 Not Started</h5>
+                    <p class="count">@todayTasks.Count(t => t.Status == "Not Started")</p>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card shadow-sm p-3">
+                    <h5>🔄 In Progress</h5>
+                    <p class="count">@todayTasks.Count(t => t.Status == "In Progress")</p>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card shadow-sm p-3">
+                    <h5>✅ Done</h5>
+                    <p class="count">@todayTasks.Count(t => t.Status == "Done")</p>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card shadow-sm p-3">
+                    <h5>📋 Total</h5>
+                    <p class="count">@todayTasks.Count</p>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <p class="text-center text-muted mb-4">No tasks for today yet.</p>
+    }
+
+    <!-- Overall Task Summary -->
     <h4 class="text-center mb-4">Your Task Summary</h4>
     <div class="row text-center justify-content-center">
         <div class="col-md-3 mb-3">
             <div class="card shadow-sm p-3">
                 <h5>🕓 Not Yet</h5>
-                <p class="count">@taskList.Count(t => t.Status == "Not Started")</p>
+                <p class="count">@taskList?.Count(t => t.Status == "Not Started") ?? 0</p>
             </div>
         </div>
         <div class="col-md-3 mb-3">
             <div class="card shadow-sm p-3">
                 <h5>🔄 In Progress</h5>
-                <p class="count">@taskList.Count(t => t.Status == "In Progress")</p>
+                <p class="count">@taskList?.Count(t => t.Status == "In Progress") ?? 0</p>
             </div>
         </div>
         <div class="col-md-3 mb-3">
             <div class="card shadow-sm p-3">
                 <h5>✅ Done</h5>
-                <p class="count">@taskList.Count(t => t.Status == "Done")</p>
+                <p class="count">@taskList?.Count(t => t.Status == "Done") ?? 0</p>
             </div>
         </div>
         <div class="col-md-3 mb-3">
             <div class="card shadow-sm p-3">
                 <h5>📋 Total</h5>
-                <p class="count">@taskList.Count</p>
+                <p class="count">@taskList?.Count ?? 0</p>
             </div>
         </div>
     </div>
 
+    <!-- Quick Actions -->
+    <div class="text-center mb-4">
+        <h4>⚡ Quick Actions</h4>
+        <div class="d-flex justify-content-center gap-2 flex-wrap">
+            <button class="btn btn-primary" @onclick="GoToAddTask">➕ Add Task</button>
+            <button class="btn btn-danger" @onclick="ClearCompletedWithConfetti">🗑️ Clear Completed</button>
+        </div>
+    </div>
+
+    <!-- Weekly Goals -->
+    <div class="text-center mb-4">
+        <h4>🎯 Weekly Goals</h4>
+        <div class="card shadow-sm p-3 mx-auto" style="max-width: 500px;">
+            <input class="form-control mb-2" placeholder="Write your weekly goal..." @bind="weeklyGoal" />
+            <button class="btn btn-primary" @onclick="SaveWeeklyGoal">Save Weekly Goal</button>
+
+            @if (!string.IsNullOrWhiteSpace(savedWeeklyGoal))
+            {
+                <div class="alert alert-info mt-3">
+                    <strong>Your Goal:</strong> @savedWeeklyGoal
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Recent Tasks -->
+    <div class="text-center mb-5">
+        <h4>🕒 Recent Tasks</h4>
+        @if (recentTasks.Any())
+        {
+            <ul class="list-group mx-auto" style="max-width: 650px;">
+                @foreach (var task in recentTasks)
+                {
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>@task.Name</strong><br />
+                            <small class="text-muted">@task.Status • @task.CreatedDate.ToShortTimeString()</small>
+                        </div>
+                        <span class="badge bg-secondary">Task</span>
+                    </li>
+                }
+            </ul>
+        }
+        else
+        {
+            <p class="text-muted">No recent activity.</p>
+        }
+    </div>
+
+    <!-- Go to Task List -->
     <div class="text-center mt-4">
         <a href="/tasks" class="btn btn-success btn-lg">Go to Task List ✨</a>
     </div>
@@ -60,72 +144,98 @@ else
 
 @code {
     private List<TaskItem>? taskList;
+    private List<TaskItem> todayTasks = new();
+    private List<TaskItem> recentTasks = new();
+    private string Greeting = "Hey there!";
+
+    // WEEKLY GOAL VARIABLES
+    private string weeklyGoal = "";
+    private string savedWeeklyGoal = "";
 
     protected override async Task OnInitializedAsync()
     {
+        // Load tasks safely
         var json = await JS.InvokeAsync<string>("localStorage.getItem", "tasks");
         taskList = string.IsNullOrEmpty(json)
         ? new List<TaskItem>()
-        : JsonSerializer.Deserialize<List<TaskItem>>(json);
+        : JsonSerializer.Deserialize<List<TaskItem>>(json) ?? new List<TaskItem>();
+
+        // Fix missing CreatedDate
+        foreach (var t in taskList)
+            if (t.CreatedDate == default)
+                t.CreatedDate = DateTime.Now;
+
+        // Today's tasks
+        todayTasks = taskList.Where(t => t.CreatedDate.Date == DateTime.Now.Date).ToList();
+
+        // Recent tasks (latest 5)
+        recentTasks = taskList.OrderByDescending(t => t.CreatedDate).Take(5).ToList();
+
+        // Load weekly goal
+        await LoadWeeklyGoal();
+
+        // Greeting
+        var token = await JS.InvokeAsync<string>("sessionStorage.getItem", "token");
+        string username = "User";
+        if (!string.IsNullOrEmpty(token))
+        {
+            var payload = ParseJwt(token);
+            username = payload.GetValueOrDefault("preferred_username")?.ToString() ?? username;
+        }
+
+        var hour = DateTime.Now.Hour;
+        Greeting = hour switch
+        {
+            >= 5 and < 12 => $"Good morning, {username}!",
+            >= 12 and < 17 => $"Good afternoon, {username}!",
+            >= 17 and < 21 => $"Good evening, {username}!",
+            _ => $"Good night, {username}!"
+        };
     }
 
     public class TaskItem
     {
         public string? Name { get; set; }
         public string Status { get; set; } = "Not Started";
+        public DateTime CreatedDate { get; set; } = DateTime.Now;
+    }
+
+    private Dictionary<string, object> ParseJwt(string jwt)
+    {
+        var parts = jwt.Split('.');
+        var payload = parts[1];
+        payload = payload.PadRight(payload.Length + (4 - payload.Length % 4) % 4, '=');
+        var jsonBytes = Convert.FromBase64String(payload.Replace('-', '+').Replace('_', '/'));
+        var json = System.Text.Encoding.UTF8.GetString(jsonBytes);
+        return JsonSerializer.Deserialize<Dictionary<string, object>>(json) ?? new();
+    }
+
+    // Quick Actions
+    private void GoToAddTask() => Nav.NavigateTo("/tasks");
+
+    private async Task ClearCompletedWithConfetti()
+    {
+        if (taskList == null) return;
+        taskList = taskList.Where(t => t.Status != "Done").ToList();
+        await SaveTasks();
+        await JS.InvokeVoidAsync("confetti");
+    }
+
+    private async Task SaveTasks()
+    {
+        var json = JsonSerializer.Serialize(taskList ?? new List<TaskItem>());
+        await JS.InvokeVoidAsync("localStorage.setItem", "tasks", json);
+    }
+
+    // Weekly Goal
+    private async Task LoadWeeklyGoal()
+    {
+        savedWeeklyGoal = await JS.InvokeAsync<string>("localStorage.getItem", "weeklyGoal") ?? "";
+    }
+
+    private async Task SaveWeeklyGoal()
+    {
+        savedWeeklyGoal = weeklyGoal;
+        await JS.InvokeVoidAsync("localStorage.setItem", "weeklyGoal", savedWeeklyGoal);
     }
 }
-
-<style>
-    h2,
-    h4,
-    h5,
-    p,
-    footer {
-        color: var(--text-color);
-    }
-
-    .quote-box {
-        font-style: italic;
-        color: var(--text-color);
-        border-left: 4px solid #007bff;
-        padding-left: 15px;
-        margin: 0 auto;
-        max-width: 600px;
-    }
-
-    .card {
-        background-color: var(--card-bg);
-        border-radius: 10px;
-        transition: transform 0.2s ease-in-out;
-    }
-
-    .card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-    }
-
-    .count {
-        font-size: 1.5rem;
-        font-weight: bold;
-        color: #007bff;
-    }
-
-    [data-theme="dark"] {
-        --bg-color: #121212;
-        --text-color: #ffffff;
-        --card-bg: #1f1f1f;
-    }
-
-    body,
-    .page {
-        background-color: var(--bg-color);
-        color: var(--text-color);
-    }
-
-    a.btn {
-        font-weight: 500;
-        padding: 10px 24px;
-        border-radius: 8px;
-    }
-</style>
